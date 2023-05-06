@@ -123,7 +123,7 @@ public class BlogReviewService {
     public void removeBlogReview(BlogReview pre){
         bookmarkService.removeBlogBookmarksByBlogReview(pre);
         likesService.removeBlogLikesByBlogReview(pre);
-        blogReviewRepository.deleteById(pre.getId());
+        blogReviewRepository.updateBlogStatus(pre.getId());
     }
 
     public void removeBlogReviewByMember(Long blogId, Member member){

@@ -33,10 +33,10 @@ public class RemovedBlogReviewService {
     }
 
     public void removeBlogReviewsPermanently(List<Long> blogId, Member member) {
-        List<BlogReview> targetList = reviewRepository.selectRemovedByIdList(member.getMemberId(), blogId);
+        List<BlogReview> targetList = reviewRepository.findRemovedByIdList(member.getMemberId(), blogId);
         if(CollectionUtils.isEmpty(targetList) || targetList.size() != blogId.size())
             throw new CustomException(BlogReviewExceptionType.BLOG_NOT_FOUND);
         imageService.removeBlogImagesByBlogReviewList(targetList);
-        reviewRepository.removeListPermanently(targetList.stream().map(BlogReview::getId).collect(Collectors.toList()));
+        reviewRepository.deleteListPermanently(targetList.stream().map(BlogReview::getId).collect(Collectors.toList()));
     }
 }

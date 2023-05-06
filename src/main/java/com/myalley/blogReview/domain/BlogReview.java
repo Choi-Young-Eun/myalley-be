@@ -5,8 +5,6 @@ import com.myalley.exhibition.domain.Exhibition;
 import com.myalley.common.domain.BaseTime;
 import com.myalley.member.domain.Member;
 import lombok.*;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -16,8 +14,6 @@ import java.util.List;
 @Entity(name="blog_review")
 @NoArgsConstructor
 @Getter
-@SQLDelete(sql = "UPDATE blog_review SET is_deleted = 1, like_count = 0, bookmark_count = 0 WHERE blog_id = ?")
-@Where(clause="is_deleted = 0")
 public class BlogReview extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
