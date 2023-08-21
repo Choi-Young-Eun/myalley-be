@@ -52,15 +52,17 @@ public class BlogReviewService {
                 .member(member)
                 .exhibition(exhibitionService.validateExistExhibition(exhibitionId)).build();
         BlogReview newBlog = blogReviewRepository.save(blogReview);
+        //0620) 아래에서 만약 이미지가 없다면 null을 반환, 있어서 엔티티로 다 만들었다면 제일 첫번째로 만든 이미지를 반환하여 Blog의 대표 이미지 컬럼에 등록
         blogImageService.uploadFileList(images, newBlog);
+
     }
 
     @Transactional
     public BlogDetailResponseDto findBlogReviewByBlogId(Long blogId, Long memberId){
-        BlogReview blog = validateBlogReview(blogId);
-        blog.updateViewCount();
-        return BlogDetailResponseDto.of(blog,likesService.findBlogLikesByBlogIdAndMemberId(blogId,memberId),
-                bookmarkService.findBlogBookmarkByBlogIdAndMemberId(blogId,memberId));
+        BlogDetailResponseDto blogDetailDto = blogReviewRepository.findDetailedByBlogId(blogId, memberId);
+        blogDetailDto.setImageInfo(blogImageService.findAllBlogImagesByBlogReviewId(blogDetailDto.getId()));
+        blogReviewRepository.updateBlogViewCount(blogDetailDto.getId(), blogDetailDto.getViewCount());
+        return blogDetailDto;
     }
 
     public BlogListResponseDto findPagedBlogReviews(Integer pageNo, String orderType, String word){
@@ -95,6 +97,10 @@ public class BlogReviewService {
         return BlogListResponseDto.blogOf(myBlogReviewList,SELF_LIST);
     }
 
+    //@Where 삭제하고 일단 임시로 IsDeleted 조건 추가한 메서드 사용하는 걸로 변경함!
+    //고민할 부분 : QueryDSL을 적용하면 PageRequest 생성하는 부분을 없앨 수 있을 것 같은데 흠
+    //-> 고민하는 이유 : 너무 지저분해 보여서 ㅠ.ㅠ 간결한 코드, 클린 코드가 뭘까? - 뭐가 더 나은 건지 잘 모르겠음
+    //-> 변경하는 경우 예상 시나리오 : pageNo이랑 orderType을 인자로 넘기고 QueryDSL 이용해서 조건을 다르게 주는 걸로 할까?
     public BlogListResponseDto findPagedBlogReviewsByExhibitionId(Long exhibitionId, Integer pageNo, String orderType) {
         PageRequest pageRequest;
         Exhibition exhibition = exhibitionService.validateExistExhibition(exhibitionId);
@@ -111,6 +117,8 @@ public class BlogReviewService {
             throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
 
         return BlogListResponseDto.blogOf(blogReviewRepository.findAllByExhibition(exhibition,pageRequest),BASIC_LIST);
+        //JPA 수정 후. 앞으로 적용할 버전
+        //-> return BlogListResponseDto.blogOf(blogReviewRepository.findAllByExhibitionAndIsDeleted(exhibition, Boolean.FALSE, pageRequest),BASIC_LIST);
     }
 
     @Transactional
