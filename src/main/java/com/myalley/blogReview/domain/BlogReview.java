@@ -81,9 +81,6 @@ public class BlogReview extends BaseTime {
         this.images.add(image);
     }
 
-    //조회수 관리
-    public void updateViewCount(){ this.viewCount++; }
-
     //좋아요 관리
     public void likesCountUp(){ this.likeCount++; }
     public void likesCountDown(){ this.likeCount--; }
