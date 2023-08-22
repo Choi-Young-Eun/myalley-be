@@ -1,6 +1,5 @@
 package com.myalley.blogReview.repository;
 
-
 import com.myalley.blogReview.domain.BlogReview;
 import com.myalley.blogReview.dto.response.BlogDetailResponseDto;
 
@@ -10,7 +9,8 @@ public interface BlogReviewRepositoryCustom {
 
     void updateBlogStatus(Long blogId);
     void updateBlogViewCount(Long blogId, Integer viewCount);
-    List<BlogReview> findRemovedByIdList(Long memberId, List<Long> blogId);
     void deleteListPermanently(List<Long> blogIdList);
+    List<BlogReview> findRemovedByIdList(Long memberId, List<Long> blogId);
     BlogDetailResponseDto findDetailedByBlogId(Long blogId, Long memberId);
+    List<BlogReview> findAllByExhibitionId(Long exhibitionId);
 }

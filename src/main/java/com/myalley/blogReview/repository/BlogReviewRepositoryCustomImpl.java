@@ -46,6 +46,14 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                         .execute();
     }
 
+    @Transactional
+    @Override
+    public void deleteListPermanently(List<Long> blogIdList) {
+        queryFactory.delete(blogReview)
+                .where(blogReview.id.in(blogIdList))
+                .execute();
+    }
+
     @Override
     public List<BlogReview> findRemovedByIdList(Long memberId, List<Long> blogId) {
         return queryFactory.selectFrom(blogReview)
@@ -53,14 +61,6 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                         blogReview.id.in(blogId),
                         blogReview.member.memberId.eq(memberId))
                 .fetch();
-    }
-
-    @Transactional
-    @Override
-    public void deleteListPermanently(List<Long> blogIdList) {
-        queryFactory.delete(blogReview)
-                .where(blogReview.id.in(blogIdList))
-                .execute();
     }
 
     @Override
@@ -107,5 +107,12 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
         blogDetailDto.updateViewCount();
         blogDetailDto.transformLikeAndBookmarkStatus();
         return blogDetailDto;
+    }
+
+    public List<BlogReview> findAllByExhibitionId(Long exhibitionId){
+        return queryFactory.selectFrom(blogReview)
+                .where(blogReview.exhibition.id.eq(exhibitionId),
+                        blogReview.isDeleted.isFalse())
+                .fetch();
     }
 }
