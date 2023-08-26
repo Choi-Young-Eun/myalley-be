@@ -52,9 +52,7 @@ public class BlogReviewService {
                 .member(member)
                 .exhibition(exhibitionService.validateExistExhibition(exhibitionId)).build();
         BlogReview newBlog = blogReviewRepository.save(blogReview);
-        //0620) 아래에서 만약 이미지가 없다면 null을 반환, 있어서 엔티티로 다 만들었다면 제일 첫번째로 만든 이미지를 반환하여 Blog의 대표 이미지 컬럼에 등록
-        blogImageService.uploadFileList(images, newBlog);
-
+        blogReview.setDisplayImage(blogImageService.uploadFileList(images, newBlog));
     }
 
     @Transactional

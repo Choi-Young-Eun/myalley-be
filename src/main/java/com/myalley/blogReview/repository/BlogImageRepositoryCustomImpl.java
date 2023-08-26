@@ -1,5 +1,6 @@
 package com.myalley.blogReview.repository;
 
+import com.myalley.blogReview.domain.BlogImage;
 import com.myalley.blogReview.dto.response.ImageDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -22,5 +23,10 @@ public class BlogImageRepositoryCustomImpl implements BlogImageRepositoryCustom{
                 .where(blogImage.blog.id.eq(blogId))
                 .fetch();
         return ImageDtos;
+    }
+
+    @Override
+    public BlogImage findOneByBlogReviewId(Long blogId) {
+        return queryFactory.selectFrom(blogImage).where(blogImage.blog.id.eq(blogId)).fetchOne();
     }
 }

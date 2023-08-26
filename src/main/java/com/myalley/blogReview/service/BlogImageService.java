@@ -21,13 +21,16 @@ import java.util.stream.Collectors;
 public class BlogImageService {
     private final BlogImageRepository blogImageRepository;
     private final S3Service s3Service;
+    private final long BASIC_IMAGE_ID=1;
 
-    public void uploadFileList(List<MultipartFile> images, BlogReview blogReview) throws IOException {
+    public BlogImage uploadFileList(List<MultipartFile> images, BlogReview blogReview) throws IOException {
         if (images != null) {
             for (MultipartFile image : images) {
                 addBlogImage(image, blogReview);
             }
+            return blogImageRepository.findOneByBlogReviewId(blogReview.getId());
         }
+        return blogImageRepository.findById(BASIC_IMAGE_ID).get();
     }
 
     public void uploadFile(BlogReview blogReview, Member member, MultipartFile image) throws IOException {

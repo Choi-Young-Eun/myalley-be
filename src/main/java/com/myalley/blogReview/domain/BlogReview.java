@@ -50,6 +50,10 @@ public class BlogReview extends BaseTime {
     @OneToMany(mappedBy = "blog")
     private List<BlogImage> images = new ArrayList<>();
 
+    @OneToOne
+    @JoinColumn(name = "display_image_id")
+    private BlogImage displayImage;
+
     @Builder
     public BlogReview(String title, String content, LocalDate viewDate, String time, String transportation,
                       String revisit, String congestion, Member member, Exhibition exhibition){
@@ -80,6 +84,7 @@ public class BlogReview extends BaseTime {
     public void setImage(BlogImage image){
         this.images.add(image);
     }
+    public void setDisplayImage(BlogImage image) { this.displayImage=image; }
 
     //좋아요 관리
     public void likesCountUp(){ this.likeCount++; }
