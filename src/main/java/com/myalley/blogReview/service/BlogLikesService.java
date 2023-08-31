@@ -8,8 +8,6 @@ import com.myalley.exception.BlogReviewExceptionType;
 import com.myalley.exception.CustomException;
 import com.myalley.member.domain.Member;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,12 +27,10 @@ public class BlogLikesService {
     }
 
     public BlogListResponseDto findMyLikedBlogReviews(Member member, Integer pageNo){
-        PageRequest pageRequest;
-        if(pageNo == null)
-            pageRequest = PageRequest.of(0,6, Sort.by("id").descending());
+        if(pageNo != null)
+            return likesRepository.findAllByMemberId(pageNo.longValue()-1, member.getMemberId());
         else
-            pageRequest = PageRequest.of(pageNo-1,6, Sort.by("id").descending());
-        return BlogListResponseDto.likesFrom(likesRepository.findAllByMember(member,pageRequest));
+            return likesRepository.findAllByMemberId(0L, member.getMemberId());
     }
 
     @Transactional
