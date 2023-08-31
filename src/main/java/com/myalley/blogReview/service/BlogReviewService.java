@@ -11,9 +11,6 @@ import com.myalley.blogReview.repository.BlogReviewRepository;
 import com.myalley.exception.BlogReviewExceptionType;
 import com.myalley.exception.CustomException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -31,8 +28,6 @@ public class BlogReviewService {
     private final BlogImageService blogImageService;
     private final BlogBookmarkService bookmarkService;
     private final BlogLikesService likesService;
-
-    public static final String SELF_LIST = "self";
 
     @Transactional
     public void createBlog(BlogRequestDto blogRequestDto, Member member, Long exhibitionId,
@@ -53,22 +48,8 @@ public class BlogReviewService {
         blogReview.setDisplayImage(blogImageService.uploadFileList(images, newBlog));
     }
 
-    @Transactional
-    public BlogDetailResponseDto findBlogReviewByBlogId(Long blogId, Long memberId){
-        BlogDetailResponseDto blogDetailDto = blogReviewRepository.findDetailedByBlogId(blogId, memberId);
-        blogDetailDto.setImageInfo(blogImageService.findAllBlogImagesByBlogReviewId(blogDetailDto.getId()));
-        blogReviewRepository.updateBlogViewCount(blogDetailDto.getId(), blogDetailDto.getViewCount());
-        return blogDetailDto;
-    }
-
-    public BlogListResponseDto findMyBlogReviews(Member member, Integer pageNo) {
-        PageRequest pageRequest;
-        if(pageNo == null)
-            pageRequest = PageRequest.of(0, 6, Sort.by("id").descending());
-        else
-            pageRequest = PageRequest.of(pageNo-1, 6, Sort.by("id").descending());
-        Page<BlogReview> myBlogReviewList = blogReviewRepository.findAllByMember(member,pageRequest);
-        return BlogListResponseDto.blogOf(myBlogReviewList,SELF_LIST);
+    public BlogListResponseDto findPagedBlogReviews(Integer pageNo, String orderType, String word) {
+        return blogReviewRepository.findPagedBlogReviews(setPageNumber(pageNo), orderType, word, null);
     }
 
     public BlogListResponseDto findPagedBlogReviewsByExhibitionId(Long exhibitionId, Integer pageNo, String orderType) {
@@ -77,8 +58,16 @@ public class BlogReviewService {
         return blogReviewRepository.findPagedBlogReviews(setPageNumber(pageNo), orderType, null, exhibitionId);
     }
 
-    public BlogListResponseDto findPagedBlogReviews(Integer pageNo, String orderType, String word) {
-        return blogReviewRepository.findPagedBlogReviews(setPageNumber(pageNo), orderType, word, null);
+    public BlogListResponseDto findMyBlogReviews(Member member, Integer pageNo) {
+        return blogReviewRepository.findPagedBlogReviewsByMemberId(setPageNumber(pageNo),member.getMemberId());
+    }
+
+    @Transactional
+    public BlogDetailResponseDto findBlogReviewByBlogId(Long blogId, Long memberId){
+        BlogDetailResponseDto blogDetailDto = blogReviewRepository.findDetailedByBlogId(blogId, memberId);
+        blogDetailDto.setImageInfo(blogImageService.findAllBlogImagesByBlogReviewId(blogDetailDto.getId()));
+        blogReviewRepository.updateBlogViewCount(blogDetailDto.getId(), blogDetailDto.getViewCount());
+        return blogDetailDto;
     }
 
     @Transactional

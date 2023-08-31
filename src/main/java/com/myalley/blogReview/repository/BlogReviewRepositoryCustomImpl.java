@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.myalley.blogReview.domain.QBlogBookmark.blogBookmark;
-import static com.myalley.blogReview.domain.QBlogImage.blogImage;
 import static com.myalley.blogReview.domain.QBlogLikes.blogLikes;
 import static com.myalley.blogReview.domain.QBlogReview.blogReview;
 import static com.myalley.exhibition.domain.QExhibition.exhibition;
@@ -35,6 +34,7 @@ import static com.myalley.member.domain.QMember.member;
 public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCustom{
     private final JPAQueryFactory queryFactory;
     private final Long LIST_BASIC = 9L;
+    private final Long LIST_MY_PAGE = 6L;
 
 
     @Transactional
@@ -120,6 +120,7 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
         return blogDetailDto;
     }
 
+    @Override
     public List<BlogReview> findAllByExhibitionId(Long exhibitionId){
         return queryFactory.selectFrom(blogReview)
                 .where(blogReview.exhibition.id.eq(exhibitionId),
@@ -134,11 +135,10 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                         blogReview.title,
                         blogReview.viewDate,
                         blogReview.viewCount,
-                        member.nickname.as("writer"),
-                        Projections.fields(ImageDto.class, blogImage.id, blogImage.url).as("imageInfo")))
+                        blogReview.member.nickname.as("writer"),
+                        Projections.fields(ImageDto.class,
+                                blogReview.displayImage.id, blogReview.displayImage.url).as("imageInfo")))
                 .from(blogReview)
-                .join(blogImage).on(blogImage.id.eq(blogReview.displayImage.id))
-                .join(member).on(member.memberId.eq(blogReview.member.memberId))
                 .where(titleContain(word),
                         exhibitionMode(exhibitionId),
                         blogReview.isDeleted.isFalse())
@@ -150,6 +150,33 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
         Integer totalCount = findCountAllBlogs(exhibitionId, word);
         pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto.size(),
                 totalCount, totalCount/LIST_BASIC.intValue()+1);
+
+        BlogListResponseDto responseDto = new BlogListResponseDto();
+        responseDto.setBlogInfo(listDto);
+        responseDto.setPageInfo(pagingDto);
+        return responseDto;
+    }
+
+    @Override
+    public BlogListResponseDto findPagedBlogReviewsByMemberId(Long pageNo, Long memberId) {
+        List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
+                blogReview.id,
+                blogReview.title,
+                blogReview.viewDate,
+                blogReview.viewCount,
+                Projections.fields(ImageDto.class,
+                        blogReview.displayImage.id, blogReview.displayImage.url).as("imageInfo")))
+                .from(blogReview)
+                .where(blogReview.member.memberId.eq(memberId))
+                .orderBy(blogReview.id.desc())
+                .limit(LIST_MY_PAGE)
+                .offset(pageNo*LIST_MY_PAGE)
+                .fetch();
+
+        Integer totalCount = queryFactory.select(blogReview.count()).from(blogReview)
+                .where(blogReview.member.memberId.eq(memberId), blogReview.isDeleted.isFalse()).fetchOne().intValue();
+        pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto.size(),
+                totalCount, totalCount/LIST_MY_PAGE.intValue()+1);
 
         BlogListResponseDto responseDto = new BlogListResponseDto();
         responseDto.setBlogInfo(listDto);

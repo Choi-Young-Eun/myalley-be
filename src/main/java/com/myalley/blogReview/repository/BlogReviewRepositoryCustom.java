@@ -14,4 +14,5 @@ public interface BlogReviewRepositoryCustom {
     BlogDetailResponseDto findDetailedByBlogId(Long blogId, Long memberId);
     List<BlogReview> findAllByExhibitionId(Long exhibitionId);
     BlogListResponseDto findPagedBlogReviews(Long pageNo, String orderType, String word, Long exhibitionId);
+    BlogListResponseDto findPagedBlogReviewsByMemberId(Long pageNo, Long memberId);
 }
