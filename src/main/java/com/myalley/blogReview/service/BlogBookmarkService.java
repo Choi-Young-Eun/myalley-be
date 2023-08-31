@@ -8,35 +8,31 @@ import com.myalley.exception.BlogReviewExceptionType;
 import com.myalley.exception.CustomException;
 import com.myalley.member.domain.Member;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class BlogBookmarkService {
-    private final BlogBookmarkRepository blogBookmarkRepository;
+    private final BlogBookmarkRepository bookmarkRepository;
 
     public Boolean switchBlogBookmark(BlogReview blogReview, Member member) {
         if(blogReview.getMember().getMemberId() == member.getMemberId())
             throw new CustomException(BlogReviewExceptionType.BOOKMARK_FORBIDDEN);
-        BlogBookmark bookmark = blogBookmarkRepository.selectBookmark(member.getMemberId(), blogReview.getId())
+        BlogBookmark bookmark = bookmarkRepository.selectBookmark(member.getMemberId(), blogReview.getId())
                 .orElse(BlogBookmark.builder().blog(blogReview).member(member).build());
         bookmark.changeBookmarkStatus();
-        blogBookmarkRepository.save(bookmark);
+        bookmarkRepository.save(bookmark);
         return !bookmark.getIsDeleted();
     }
 
     public BlogListResponseDto findMyBookmarkedBlogReviews(Member member, Integer pageNo){
-        PageRequest pageRequest;
-        if(pageNo == null)
-            pageRequest = PageRequest.of(0, 6, Sort.by("id").descending());
+        if(pageNo != null)
+            return bookmarkRepository.findAllByMemberId(pageNo.longValue()-1, member.getMemberId());
         else
-            pageRequest = PageRequest.of(pageNo-1, 6, Sort.by("id").descending());
-        return BlogListResponseDto.bookmarkFrom(blogBookmarkRepository.findAllByMember(member, pageRequest));
+            return bookmarkRepository.findAllByMemberId(0L, member.getMemberId());
     }
 
     @Transactional
-    public void removeBlogBookmarksByBlogReview(BlogReview blogReview){ blogBookmarkRepository.deleteAllByBlog(blogReview); }
+    public void removeBlogBookmarksByBlogReview(BlogReview blogReview){ bookmarkRepository.deleteAllByBlog(blogReview); }
 }
