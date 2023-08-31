@@ -2,19 +2,29 @@ package com.myalley.blogReview.repository;
 
 import com.myalley.blogReview.domain.BlogReview;
 import com.myalley.blogReview.dto.response.BlogDetailResponseDto;
+import com.myalley.blogReview.dto.response.BlogListDto;
+import com.myalley.blogReview.dto.response.BlogListResponseDto;
+import com.myalley.blogReview.dto.response.ImageDto;
+import com.myalley.common.dto.pagingDto;
 import com.myalley.exception.BlogReviewExceptionType;
 import com.myalley.exception.CustomException;
 import com.myalley.exhibition.dto.response.ExhibitionBlogDto;
 import com.myalley.member.dto.MemberBlogDto;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.myalley.blogReview.domain.QBlogBookmark.blogBookmark;
+import static com.myalley.blogReview.domain.QBlogImage.blogImage;
 import static com.myalley.blogReview.domain.QBlogLikes.blogLikes;
 import static com.myalley.blogReview.domain.QBlogReview.blogReview;
 import static com.myalley.exhibition.domain.QExhibition.exhibition;
@@ -24,6 +34,7 @@ import static com.myalley.member.domain.QMember.member;
 @RequiredArgsConstructor
 public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCustom{
     private final JPAQueryFactory queryFactory;
+    private final Long LIST_BASIC = 9L;
 
 
     @Transactional
@@ -114,5 +125,66 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                 .where(blogReview.exhibition.id.eq(exhibitionId),
                         blogReview.isDeleted.isFalse())
                 .fetch();
+    }
+
+    @Override
+    public BlogListResponseDto findPagedBlogReviews(Long pageNo, String orderType, String word, Long exhibitionId) {
+        List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
+                        blogReview.id,
+                        blogReview.title,
+                        blogReview.viewDate,
+                        blogReview.viewCount,
+                        member.nickname.as("writer"),
+                        Projections.fields(ImageDto.class, blogImage.id, blogImage.url).as("imageInfo")))
+                .from(blogReview)
+                .join(blogImage).on(blogImage.id.eq(blogReview.displayImage.id))
+                .join(member).on(member.memberId.eq(blogReview.member.memberId))
+                .where(titleContain(word),
+                        exhibitionMode(exhibitionId),
+                        blogReview.isDeleted.isFalse())
+                .orderBy(orderSpecifierList(orderType))
+                .limit(LIST_BASIC)
+                .offset(pageNo*LIST_BASIC)
+                .fetch();
+
+        Integer totalCount = findCountAllBlogs(exhibitionId, word);
+        pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto.size(),
+                totalCount, totalCount/LIST_BASIC.intValue()+1);
+
+        BlogListResponseDto responseDto = new BlogListResponseDto();
+        responseDto.setBlogInfo(listDto);
+        responseDto.setPageInfo(pagingDto);
+        return responseDto;
+    }
+
+    private OrderSpecifier[] orderSpecifierList(String orderType) {
+        List<OrderSpecifier> orderSpecifiers = new ArrayList<>();
+
+        if(orderType == null || orderType.equals("Recent")){
+            orderSpecifiers.add(new OrderSpecifier(Order.DESC, blogReview.id));
+        }else if(orderType.equals("ViewCount")){
+            orderSpecifiers.add(new OrderSpecifier(Order.DESC, blogReview.viewCount));
+            orderSpecifiers.add(new OrderSpecifier(Order.DESC, blogReview.id));
+        }else{
+            throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
+        }
+        return orderSpecifiers.toArray(new OrderSpecifier[orderSpecifiers.size()]);
+    }
+
+    private Integer findCountAllBlogs(Long exhibitionId, String word) {
+        return queryFactory
+                .select(blogReview.count()).from(blogReview)
+                .where(exhibitionMode(exhibitionId),
+                        titleContain(word),
+                        blogReview.isDeleted.isFalse())
+                .fetchOne().intValue();
+    }
+
+    private BooleanExpression titleContain(String word) {
+        return StringUtils.hasText(word) ? blogReview.title.contains(word) : null;
+    }
+
+    private BooleanExpression exhibitionMode(Long exhibitionId) {
+        return exhibitionId != null ? blogReview.exhibition.id.eq(exhibitionId) : null;
     }
 }

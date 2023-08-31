@@ -4,7 +4,6 @@ import com.myalley.blogReview.domain.BlogReview;
 import com.myalley.blogReview.dto.request.BlogRequestDto;
 import com.myalley.blogReview.dto.response.BlogDetailResponseDto;
 import com.myalley.blogReview.dto.response.BlogListResponseDto;
-import com.myalley.exhibition.domain.Exhibition;
 import com.myalley.exhibition.service.ExhibitionService;
 import com.myalley.member.domain.Member;
 
@@ -33,7 +32,6 @@ public class BlogReviewService {
     private final BlogBookmarkService bookmarkService;
     private final BlogLikesService likesService;
 
-    public static final String BASIC_LIST = "basic";
     public static final String SELF_LIST = "self";
 
     @Transactional
@@ -63,28 +61,6 @@ public class BlogReviewService {
         return blogDetailDto;
     }
 
-    public BlogListResponseDto findPagedBlogReviews(Integer pageNo, String orderType, String word){
-        PageRequest pageRequest;
-        Page<BlogReview> blogReviewList;
-        if(pageNo == null)
-            pageNo = 0;
-        else
-            pageNo--;
-        if(orderType!=null && orderType.equals("ViewCount")) {
-            pageRequest = PageRequest.of(pageNo, 9, Sort.by("viewCount").descending()
-                    .and(Sort.by("id").descending()));
-        } else if(orderType==null || orderType.equals("Recent")){
-            pageRequest = PageRequest.of(pageNo, 9, Sort.by("id").descending());
-        } else{
-            throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
-        }
-        if(word != null)
-            blogReviewList = blogReviewRepository.findAllByTitleContaining(word,pageRequest);
-        else
-            blogReviewList = blogReviewRepository.findAll(pageRequest);
-        return BlogListResponseDto.blogOf(blogReviewList,BASIC_LIST);
-    }
-
     public BlogListResponseDto findMyBlogReviews(Member member, Integer pageNo) {
         PageRequest pageRequest;
         if(pageNo == null)
@@ -95,28 +71,14 @@ public class BlogReviewService {
         return BlogListResponseDto.blogOf(myBlogReviewList,SELF_LIST);
     }
 
-    //@Where 삭제하고 일단 임시로 IsDeleted 조건 추가한 메서드 사용하는 걸로 변경함!
-    //고민할 부분 : QueryDSL을 적용하면 PageRequest 생성하는 부분을 없앨 수 있을 것 같은데 흠
-    //-> 고민하는 이유 : 너무 지저분해 보여서 ㅠ.ㅠ 간결한 코드, 클린 코드가 뭘까? - 뭐가 더 나은 건지 잘 모르겠음
-    //-> 변경하는 경우 예상 시나리오 : pageNo이랑 orderType을 인자로 넘기고 QueryDSL 이용해서 조건을 다르게 주는 걸로 할까?
     public BlogListResponseDto findPagedBlogReviewsByExhibitionId(Long exhibitionId, Integer pageNo, String orderType) {
-        PageRequest pageRequest;
-        Exhibition exhibition = exhibitionService.validateExistExhibition(exhibitionId);
-        if(pageNo == null)
-            pageNo = 0;
-        else
-            pageNo--;
-        if(orderType!=null && orderType.equals("ViewCount"))
-            pageRequest = PageRequest.of(pageNo, 9, Sort.by("viewCount").descending()
-                    .and(Sort.by("id")).descending());
-        else if(orderType == null || orderType.equals("Recent"))
-            pageRequest = PageRequest.of(pageNo, 9, Sort.by("id").descending());
-        else
+        if(exhibitionId == null)
             throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
+        return blogReviewRepository.findPagedBlogReviews(setPageNumber(pageNo), orderType, null, exhibitionId);
+    }
 
-        return BlogListResponseDto.blogOf(blogReviewRepository.findAllByExhibition(exhibition,pageRequest),BASIC_LIST);
-        //JPA 수정 후. 앞으로 적용할 버전
-        //-> return BlogListResponseDto.blogOf(blogReviewRepository.findAllByExhibitionAndIsDeleted(exhibition, Boolean.FALSE, pageRequest),BASIC_LIST);
+    public BlogListResponseDto findPagedBlogReviews(Integer pageNo, String orderType, String word) {
+        return blogReviewRepository.findPagedBlogReviews(setPageNumber(pageNo), orderType, word, null);
     }
 
     @Transactional
@@ -163,5 +125,13 @@ public class BlogReviewService {
             throw new CustomException(BlogReviewExceptionType.BLOG_FORBIDDEN);
         }
         return review;
+    }
+    
+    //3. 블로그 목록 조회 요청 시 pageNumber 세팅
+    private Long setPageNumber(Integer pageNo){
+        if(pageNo != null)
+            return pageNo.longValue()-1;
+        else
+            return 0L;
     }
 }
