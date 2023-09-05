@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,19 +60,12 @@ public class BlogImageService {
         blogImageRepository.delete(foundImage);
     }
 
-    public void removeBlogImagesByBlogReviewList(List<BlogReview> targetList) {
-        //-기존 : N*(최소 0-최대3) / for문 2개
-        //1) for1. 블로그 ID리스트를 반복하여 블로그 하나씩 해당하는 이미지 리스트 한번에 가져오기
-        //2) for2. 가져온 이미지 리스트를 반복하여 하나씩 DB에서 삭제하기
-        //3) for2. 삭제한 이미지 파일명으로 S3에서 이미지 삭제하기
-        for(BlogReview blogReview : targetList) {
-            List<BlogImage> blogImageList = blogImageRepository.findAllByBlog(blogReview);
-            if (!CollectionUtils.isEmpty(blogImageList)) {
-                for (BlogImage blogImage : blogImageList) {
-                    blogImageRepository.delete(blogImage);
-                    s3Service.deleteBlogImage(blogImage.getFileName());
-                }
-                blogImageList.clear();
+    public void removeBlogImagesByBlogReviewList(List<Long> targetList) {
+        List<BlogImage> blogImageList = blogImageRepository.findAllByBlogReviewIdList(targetList);
+        if (!CollectionUtils.isEmpty(blogImageList)) {
+            for (BlogImage blogImage : blogImageList) {
+                blogImageRepository.delete(blogImage);
+                s3Service.deleteBlogImage(blogImage.getFileName());
             }
         }
     }

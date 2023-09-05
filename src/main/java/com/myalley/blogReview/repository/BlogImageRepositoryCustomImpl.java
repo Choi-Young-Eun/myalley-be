@@ -26,6 +26,14 @@ public class BlogImageRepositoryCustomImpl implements BlogImageRepositoryCustom{
     }
 
     @Override
+    public List<BlogImage> findAllByBlogReviewIdList(List<Long> blogIdList) {
+        List<BlogImage> blogImages = queryFactory.selectFrom(blogImage)
+                .where(blogImage.blog.id.in(blogIdList))
+                .fetch();
+        return blogImages;
+    }
+
+    @Override
     public BlogImage findOneByBlogReviewId(Long blogId) {
         return queryFactory.selectFrom(blogImage).where(blogImage.blog.id.eq(blogId)).fetchOne();
     }

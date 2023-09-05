@@ -66,10 +66,10 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
     }
 
     @Override
-    public List<BlogReview> findRemovedByIdList(Long memberId, List<Long> blogId) {
-        return queryFactory.selectFrom(blogReview)
-                .where(blogReview.isDeleted.isTrue(),
-                        blogReview.id.in(blogId),
+    public List<Long> findRemovedByIdList(Long memberId, List<Long> blogIdList) {
+        return queryFactory.select(blogReview.id).from(blogReview)
+                .where(deleteMode(true),
+                        blogReview.id.in(blogIdList),
                         blogReview.member.memberId.eq(memberId))
                 .fetch();
     }
@@ -158,7 +158,7 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
     }
 
     @Override
-    public BlogListResponseDto findPagedBlogReviewsByMemberId(Long pageNo, Long memberId) {
+    public BlogListResponseDto findPagedBlogReviewsByMemberId(Long pageNo, Long memberId, boolean deleteMode) {
         List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
                 blogReview.id,
                 blogReview.title,
@@ -167,14 +167,14 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                 Projections.fields(ImageDto.class,
                         blogReview.displayImage.id, blogReview.displayImage.url).as("imageInfo")))
                 .from(blogReview)
-                .where(blogReview.member.memberId.eq(memberId))
+                .where(blogReview.member.memberId.eq(memberId), deleteMode(deleteMode))
                 .orderBy(blogReview.id.desc())
                 .limit(LIST_MY_PAGE)
                 .offset(pageNo*LIST_MY_PAGE)
                 .fetch();
 
         Integer totalCount = queryFactory.select(blogReview.count()).from(blogReview)
-                .where(blogReview.member.memberId.eq(memberId), blogReview.isDeleted.isFalse()).fetchOne().intValue();
+                .where(blogReview.member.memberId.eq(memberId), deleteMode(deleteMode)).fetchOne().intValue();
         pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto.size(),
                 totalCount, totalCount/LIST_MY_PAGE.intValue()+1);
 
@@ -213,5 +213,9 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
 
     private BooleanExpression exhibitionMode(Long exhibitionId) {
         return exhibitionId != null ? blogReview.exhibition.id.eq(exhibitionId) : null;
+    }
+
+    private BooleanExpression deleteMode(Boolean mode) {
+        return mode ? blogReview.isDeleted.isTrue() : blogReview.isDeleted.isFalse();
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -58,12 +59,14 @@ public class BlogReviewService {
         return blogReviewRepository.findPagedBlogReviews(setPageNumber(pageNo), orderType, null, exhibitionId);
     }
 
-    public BlogListResponseDto findMyBlogReviews(Member member, Integer pageNo) {
-        return blogReviewRepository.findPagedBlogReviewsByMemberId(setPageNumber(pageNo),member.getMemberId());
+    public BlogListResponseDto findMyBlogReviews(Member member, Integer pageNo, boolean deleteMode) {
+        return blogReviewRepository.findPagedBlogReviewsByMemberId(setPageNumber(pageNo),member.getMemberId(),deleteMode);
     }
 
     @Transactional
     public BlogDetailResponseDto findBlogReviewByBlogId(Long blogId, Long memberId){
+        if(memberId == null)
+            memberId = 0L;
         BlogDetailResponseDto blogDetailDto = blogReviewRepository.findDetailedByBlogId(blogId, memberId);
         blogDetailDto.setImageInfo(blogImageService.findAllBlogImagesByBlogReviewId(blogDetailDto.getId()));
         blogReviewRepository.updateBlogViewCount(blogDetailDto.getId(), blogDetailDto.getViewCount());
@@ -81,6 +84,15 @@ public class BlogReviewService {
         bookmarkService.removeBlogBookmarksByBlogReview(pre);
         likesService.removeBlogLikesByBlogReview(pre);
         blogReviewRepository.updateBlogStatus(pre.getId());
+    }
+
+    @Transactional
+    public void removeBlogReviewsPermanently(List<Long> blogId, Member member) {
+        List<Long> blogIdList = blogReviewRepository.findRemovedByIdList(member.getMemberId(), blogId);
+        if(CollectionUtils.isEmpty(blogIdList) || blogIdList.size() != blogId.size())
+            throw new CustomException(BlogReviewExceptionType.BLOG_NOT_FOUND);
+        blogImageService.removeBlogImagesByBlogReviewList(blogIdList);
+        blogReviewRepository.deleteListPermanently(blogIdList);
     }
 
     public void removeBlogReviewByMember(Long blogId, Member member){

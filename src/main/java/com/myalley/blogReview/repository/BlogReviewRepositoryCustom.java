@@ -10,9 +10,9 @@ public interface BlogReviewRepositoryCustom {
     void updateBlogStatus(Long blogId);
     void updateBlogViewCount(Long blogId, Integer viewCount);
     void deleteListPermanently(List<Long> blogIdList);
-    List<BlogReview> findRemovedByIdList(Long memberId, List<Long> blogId);
+    List<Long> findRemovedByIdList(Long memberId, List<Long> blogIdList);
     BlogDetailResponseDto findDetailedByBlogId(Long blogId, Long memberId);
     List<BlogReview> findAllByExhibitionId(Long exhibitionId);
     BlogListResponseDto findPagedBlogReviews(Long pageNo, String orderType, String word, Long exhibitionId);
-    BlogListResponseDto findPagedBlogReviewsByMemberId(Long pageNo, Long memberId);
+    BlogListResponseDto findPagedBlogReviewsByMemberId(Long pageNo, Long memberId, boolean deleteMode);
 }
