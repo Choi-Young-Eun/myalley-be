@@ -1,5 +1,6 @@
 package com.myalley.blogReview.repository;
 
+import com.myalley.blogReview.domain.BlogBookmark;
 import com.myalley.blogReview.dto.response.BlogListDto;
 import com.myalley.blogReview.dto.response.BlogListResponseDto;
 import com.myalley.blogReview.dto.response.ImageDto;
@@ -38,7 +39,7 @@ public class BlogBookmarkRepositoryCustomImpl implements BlogBookmarkRepositoryC
                 .fetch();
 
         Integer totalCount = queryFactory.select(blogBookmark.count()).from(blogBookmark)
-                .where(blogBookmark.member.memberId.eq(memberId), blogBookmark.isDeleted.isFalse())
+                .where(blogBookmark.member.memberId.eq(memberId))
                 .fetchOne().intValue();
         pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto.size(),
                 totalCount, totalCount/LIST_MY_PAGE.intValue()+1);
@@ -47,5 +48,12 @@ public class BlogBookmarkRepositoryCustomImpl implements BlogBookmarkRepositoryC
         responseDto.setBlogInfo(listDto);
         responseDto.setPageInfo(pagingDto);
         return responseDto;
+    }
+
+    @Override
+    public BlogBookmark findBookmarkLogByMemberIdAndBlogId(Long memberId, Long blogId) {
+        return queryFactory.selectFrom(blogBookmark)
+                .where(blogBookmark.member.memberId.eq(memberId), blogBookmark.blog.id.eq(blogId))
+                .fetchOne();
     }
 }

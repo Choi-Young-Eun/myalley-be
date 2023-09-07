@@ -19,8 +19,9 @@ public class BlogBookmarkService {
     public Boolean switchBlogBookmark(BlogReview blogReview, Member member) {
         if(blogReview.getMember().getMemberId() == member.getMemberId())
             throw new CustomException(BlogReviewExceptionType.BOOKMARK_FORBIDDEN);
-        BlogBookmark bookmark = bookmarkRepository.selectBookmark(member.getMemberId(), blogReview.getId())
-                .orElse(BlogBookmark.builder().blog(blogReview).member(member).build());
+        BlogBookmark bookmark = bookmarkRepository.findBookmarkLogByMemberIdAndBlogId(member.getMemberId(), blogReview.getId());
+        if(bookmark == null)
+            bookmark = BlogBookmark.builder().blog(blogReview).member(member).build();
         bookmark.changeBookmarkStatus();
         bookmarkRepository.save(bookmark);
         return !bookmark.getIsDeleted();
