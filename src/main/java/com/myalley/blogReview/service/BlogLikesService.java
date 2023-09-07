@@ -21,7 +21,7 @@ public class BlogLikesService {
             throw new CustomException(BlogReviewExceptionType.LIKES_BAD_REQUEST);
         BlogLikes likes = likesRepository.findLikesLogByMemberIdAndBlogId(member.getMemberId(), blogReview.getId());
         if(likes == null)
-            BlogLikes.builder().blog(blogReview).member(member).build();
+            likes = BlogLikes.builder().blog(blogReview).member(member).build();
         likes.changeLikesStatus();
         likesRepository.save(likes);
         return !likes.getIsDeleted();
@@ -35,7 +35,7 @@ public class BlogLikesService {
     }
 
     @Transactional
-    public void removeBlogLikesByBlogReview(BlogReview blogReview){
-        likesRepository.deleteAllByBlog(blogReview);
+    public void removeBlogLikesByBlogReview(Long blogId){
+        likesRepository.deleteAllByBlogId(blogId);
     }
 }
