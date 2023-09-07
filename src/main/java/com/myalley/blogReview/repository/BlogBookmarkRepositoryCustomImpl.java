@@ -10,6 +10,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 import static com.myalley.blogReview.domain.QBlogBookmark.blogBookmark;
@@ -55,5 +56,13 @@ public class BlogBookmarkRepositoryCustomImpl implements BlogBookmarkRepositoryC
         return queryFactory.selectFrom(blogBookmark)
                 .where(blogBookmark.member.memberId.eq(memberId), blogBookmark.blog.id.eq(blogId))
                 .fetchOne();
+    }
+
+    @Transactional
+    @Override
+    public void deleteAllByBlogId(Long blogId) {
+        queryFactory.delete(blogBookmark)
+                .where(blogBookmark.blog.id.eq(blogId))
+                .execute();
     }
 }

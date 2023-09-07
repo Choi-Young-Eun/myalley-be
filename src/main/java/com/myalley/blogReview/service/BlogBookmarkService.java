@@ -35,5 +35,5 @@ public class BlogBookmarkService {
     }
 
     @Transactional
-    public void removeBlogBookmarksByBlogReview(BlogReview blogReview){ bookmarkRepository.deleteAllByBlog(blogReview); }
+    public void removeBlogBookmarksByBlogReview(Long blogId){ bookmarkRepository.deleteAllByBlogId(blogId); }
 }

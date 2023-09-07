@@ -19,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -80,10 +79,10 @@ public class BlogReviewService {
     }
 
     @Transactional
-    public void removeBlogReview(BlogReview pre){
-        bookmarkService.removeBlogBookmarksByBlogReview(pre);
-        likesService.removeBlogLikesByBlogReview(pre);
-        blogReviewRepository.updateBlogStatus(pre.getId());
+    public void removeBlogReview(Long blogId){
+        bookmarkService.removeBlogBookmarksByBlogReview(blogId);
+        likesService.removeBlogLikesByBlogReview(blogId);
+        blogReviewRepository.updateBlogStatus(blogId);
     }
 
     @Transactional
@@ -97,14 +96,16 @@ public class BlogReviewService {
 
     public void removeBlogReviewByMember(Long blogId, Member member){
         BlogReview pre = verifyRequester(blogId,member.getMemberId());
-        removeBlogReview(pre);
+        if(pre.getIsDeleted() == Boolean.FALSE)
+            removeBlogReview(pre.getId());
+        else throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
     }
 
     public void removeBlogReviewByExhibitionId(Long exhibitionId){
         List<BlogReview> lists = blogReviewRepository.findAllByExhibitionId(exhibitionId);
         if(!CollectionUtils.isEmpty(lists)) {
             for(BlogReview br : lists){
-                removeBlogReview(br);
+                removeBlogReview(br.getId());
             }
         }
     }
@@ -114,6 +115,8 @@ public class BlogReviewService {
         BlogReview blog = blogReviewRepository.findById(blogId).orElseThrow(() -> {
             throw new CustomException(BlogReviewExceptionType.BLOG_NOT_FOUND);
         });
+        if(blog.getIsDeleted())
+            throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
         return blog;
     }
     
