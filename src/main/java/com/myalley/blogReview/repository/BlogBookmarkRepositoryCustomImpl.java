@@ -14,6 +14,9 @@ import javax.transaction.Transactional;
 import java.util.List;
 
 import static com.myalley.blogReview.domain.QBlogBookmark.blogBookmark;
+import static com.myalley.blogReview.domain.QBlogImage.blogImage;
+import static com.myalley.blogReview.domain.QBlogReview.blogReview;
+import static com.myalley.member.domain.QMember.member;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,14 +27,17 @@ public class BlogBookmarkRepositoryCustomImpl implements BlogBookmarkRepositoryC
     @Override
     public BlogListResponseDto findAllByMemberId(Long pageNo, Long memberId) {
         List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
-                        blogBookmark.blog.id,
-                        blogBookmark.blog.title,
-                        blogBookmark.blog.viewDate,
-                        blogBookmark.blog.viewCount,
-                        blogBookmark.blog.member.nickname.as("writer"),
+                        blogReview.id,
+                        blogReview.title,
+                        blogReview.viewDate,
+                        blogReview.viewCount,
+                        member.nickname.as("writer"),
                         Projections.fields(ImageDto.class,
-                                blogBookmark.blog.displayImage.id,  blogBookmark.blog.displayImage.url).as("imageInfo")))
+                                blogImage.id,  blogImage.url).as("imageInfo")))
                 .from(blogBookmark)
+                .innerJoin(blogBookmark.blog, blogReview)
+                .innerJoin(blogReview.member, member)
+                .innerJoin(blogReview.displayImage, blogImage)
                 .where(blogBookmark.member.memberId.eq(memberId),
                         blogBookmark.isDeleted.isFalse())
                 .orderBy(blogBookmark.updatedAt.desc())

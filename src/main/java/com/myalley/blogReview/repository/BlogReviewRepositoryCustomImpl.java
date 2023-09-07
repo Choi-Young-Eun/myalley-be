@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.myalley.blogReview.domain.QBlogBookmark.blogBookmark;
+import static com.myalley.blogReview.domain.QBlogImage.blogImage;
 import static com.myalley.blogReview.domain.QBlogLikes.blogLikes;
 import static com.myalley.blogReview.domain.QBlogReview.blogReview;
 import static com.myalley.exhibition.domain.QExhibition.exhibition;
@@ -91,26 +92,25 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                 blogReview.congestion,
                 blogLikes.isDeleted.as("likeStatus"),
                 blogBookmark.isDeleted.as("bookmarkStatus"),
-                        Projections.fields(MemberBlogDto.class,
-                                member.memberId,
-                                member.nickname,
-                                member.memberImage).as("memberInfo"),
                         Projections.fields(ExhibitionBlogDto.class,
                                 exhibition.id,
                                 exhibition.title,
                                 exhibition.posterUrl,
                                 exhibition.duration,
                                 exhibition.space,
-                                exhibition.type).as("exhibitionInfo")))
-                .from(blogReview).leftJoin(blogLikes)
+                                exhibition.type).as("exhibitionInfo"),
+                        Projections.fields(MemberBlogDto.class,
+                                member.memberId,
+                                member.nickname,
+                                member.memberImage).as("memberInfo")))
+                .from(blogReview)
+                .innerJoin(blogReview.exhibition, exhibition)
+                .innerJoin(blogReview.member, member)
+                .leftJoin(blogLikes)
                 .on(blogLikes.blog.id.eq(blogId), blogLikes.member.memberId.eq(memberId))
                 .leftJoin(blogBookmark)
                 .on(blogBookmark.blog.id.eq(blogId), blogBookmark.member.memberId.eq(memberId))
-                .join(member)
-                .on(member.memberId.eq(blogReview.member.memberId))
-                .join(exhibition)
-                .on(exhibition.id.eq(blogReview.exhibition.id))
-                .where(blogReview.id.eq(blogId))
+                .where(blogReview.id.eq(blogId), blogReview.isDeleted.isFalse())
                 .fetchOne();
         if(blogDetailDto == null) {
             throw new CustomException(BlogReviewExceptionType.BLOG_NOT_FOUND);
@@ -135,10 +135,12 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                         blogReview.title,
                         blogReview.viewDate,
                         blogReview.viewCount,
-                        blogReview.member.nickname.as("writer"),
+                        member.nickname.as("writer"),
                         Projections.fields(ImageDto.class,
-                                blogReview.displayImage.id, blogReview.displayImage.url).as("imageInfo")))
+                                blogImage.id, blogImage.url).as("imageInfo")))
                 .from(blogReview)
+                .innerJoin(blogReview.member, member)
+                .innerJoin(blogReview.displayImage, blogImage)
                 .where(titleContain(word),
                         exhibitionMode(exhibitionId),
                         blogReview.isDeleted.isFalse())
@@ -165,8 +167,9 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                 blogReview.viewDate,
                 blogReview.viewCount,
                 Projections.fields(ImageDto.class,
-                        blogReview.displayImage.id, blogReview.displayImage.url).as("imageInfo")))
+                        blogImage.id, blogImage.url).as("imageInfo")))
                 .from(blogReview)
+                .innerJoin(blogReview.displayImage, blogImage)
                 .where(blogReview.member.memberId.eq(memberId), deleteMode(deleteMode))
                 .orderBy(blogReview.id.desc())
                 .limit(LIST_MY_PAGE)

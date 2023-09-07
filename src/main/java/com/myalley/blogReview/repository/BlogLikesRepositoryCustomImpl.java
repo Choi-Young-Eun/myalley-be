@@ -13,7 +13,10 @@ import org.springframework.stereotype.Repository;
 import javax.transaction.Transactional;
 import java.util.List;
 
+import static com.myalley.blogReview.domain.QBlogImage.blogImage;
 import static com.myalley.blogReview.domain.QBlogLikes.blogLikes;
+import static com.myalley.blogReview.domain.QBlogReview.blogReview;
+import static com.myalley.member.domain.QMember.member;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,14 +27,17 @@ public class BlogLikesRepositoryCustomImpl implements BlogLikesRepositoryCustom{
     @Override
     public BlogListResponseDto findAllByMemberId(Long pageNo, Long memberId) {
         List<BlogListDto> listDto2 = queryFactory.select(Projections.fields(BlogListDto.class,
-                        blogLikes.blog.id,
-                        blogLikes.blog.title,
-                        blogLikes.blog.viewDate,
-                        blogLikes.blog.viewCount,
-                        blogLikes.blog.member.nickname.as("writer"),
+                        blogReview.id,
+                        blogReview.title,
+                        blogReview.viewDate,
+                        blogReview.viewCount,
+                        member.nickname.as("writer"),
                         Projections.fields(ImageDto.class,
-                                blogLikes.blog.displayImage.id,  blogLikes.blog.displayImage.url).as("imageInfo")))
+                                blogImage.id,  blogImage.url).as("imageInfo")))
                 .from(blogLikes)
+                .innerJoin(blogLikes.blog, blogReview)
+                .innerJoin(blogReview.member, member)
+                .innerJoin(blogReview.displayImage, blogImage)
                 .where(blogLikes.member.memberId.eq(memberId),
                         blogLikes.isDeleted.isFalse())
                 .orderBy(blogLikes.updatedAt.desc())
