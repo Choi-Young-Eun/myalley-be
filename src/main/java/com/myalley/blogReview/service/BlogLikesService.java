@@ -19,11 +19,12 @@ public class BlogLikesService {
     public Boolean switchBlogLikes(BlogReview blogReview, Member member) {
         if(blogReview.getMember().getMemberId()==member.getMemberId())
             throw new CustomException(BlogReviewExceptionType.LIKES_BAD_REQUEST);
-        BlogLikes like = likesRepository.selectLike(member.getMemberId(),blogReview.getId())
-                .orElseGet(() -> BlogLikes.builder().blog(blogReview).member(member).build());
-        like.changeLikesStatus();
-        likesRepository.save(like);
-        return !like.getIsDeleted();
+        BlogLikes likes = likesRepository.findLikesLogByMemberIdAndBlogId(member.getMemberId(), blogReview.getId());
+        if(likes == null)
+            BlogLikes.builder().blog(blogReview).member(member).build();
+        likes.changeLikesStatus();
+        likesRepository.save(likes);
+        return !likes.getIsDeleted();
     }
 
     public BlogListResponseDto findMyLikedBlogReviews(Member member, Integer pageNo){

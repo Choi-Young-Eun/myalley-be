@@ -1,5 +1,6 @@
 package com.myalley.blogReview.repository;
 
+import com.myalley.blogReview.domain.BlogLikes;
 import com.myalley.blogReview.dto.response.BlogListDto;
 import com.myalley.blogReview.dto.response.BlogListResponseDto;
 import com.myalley.blogReview.dto.response.ImageDto;
@@ -47,5 +48,12 @@ public class BlogLikesRepositoryCustomImpl implements BlogLikesRepositoryCustom{
         responseDto.setBlogInfo(listDto2);
         responseDto.setPageInfo(pagingDto);
         return responseDto;
+    }
+
+    @Override
+    public BlogLikes findLikesLogByMemberIdAndBlogId(Long memberId, Long blogId) {
+        return queryFactory.selectFrom(blogLikes)
+                .where(blogLikes.member.memberId.eq(memberId), blogLikes.blog.id.eq(blogId))
+                .fetchOne();
     }
 }
