@@ -5,8 +5,6 @@ import com.myalley.exhibition.domain.Exhibition;
 import com.myalley.common.domain.BaseTime;
 import com.myalley.member.domain.Member;
 import lombok.*;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -16,8 +14,6 @@ import java.util.List;
 @Entity(name="blog_review")
 @NoArgsConstructor
 @Getter
-@SQLDelete(sql = "UPDATE blog_review SET is_deleted = 1, like_count = 0, bookmark_count = 0 WHERE blog_id = ?")
-@Where(clause="is_deleted = 0")
 public class BlogReview extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,6 +50,10 @@ public class BlogReview extends BaseTime {
     @OneToMany(mappedBy = "blog")
     private List<BlogImage> images = new ArrayList<>();
 
+    @OneToOne
+    @JoinColumn(name = "display_image_id")
+    private BlogImage displayImage;
+
     @Builder
     public BlogReview(String title, String content, LocalDate viewDate, String time, String transportation,
                       String revisit, String congestion, Member member, Exhibition exhibition){
@@ -84,9 +84,7 @@ public class BlogReview extends BaseTime {
     public void setImage(BlogImage image){
         this.images.add(image);
     }
-
-    //조회수 관리
-    public void updateViewCount(){ this.viewCount++; }
+    public void setDisplayImage(BlogImage image) { this.displayImage=image; }
 
     //좋아요 관리
     public void likesCountUp(){ this.likeCount++; }

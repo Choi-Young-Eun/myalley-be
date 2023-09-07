@@ -7,52 +7,35 @@ import com.myalley.blogReview.repository.BlogLikesRepository;
 import com.myalley.exception.BlogReviewExceptionType;
 import com.myalley.exception.CustomException;
 import com.myalley.member.domain.Member;
-import com.myalley.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class BlogLikesService {
     private final BlogLikesRepository likesRepository;
-    private final MemberService memberService;
 
     public Boolean switchBlogLikes(BlogReview blogReview, Member member) {
         if(blogReview.getMember().getMemberId()==member.getMemberId())
             throw new CustomException(BlogReviewExceptionType.LIKES_BAD_REQUEST);
-        BlogLikes like = likesRepository.selectLike(member.getMemberId(),blogReview.getId())
-                .orElseGet(() -> BlogLikes.builder().blog(blogReview).member(member).build());
-        like.changeLikesStatus();
-        likesRepository.save(like);
-        return !like.getIsDeleted();
-    }
-
-    public boolean findBlogLikesByBlogIdAndMemberId(Long blogId, Long memberId) {
-        if(memberId != 0) {
-            Member member = memberService.validateMember(memberId);
-            Optional<BlogLikes> blogLikes = likesRepository.selectLike(member.getMemberId(), blogId);
-            if(blogLikes.isPresent())
-                return !blogLikes.get().getIsDeleted();
-        }
-        return false;
+        BlogLikes likes = likesRepository.findLikesLogByMemberIdAndBlogId(member.getMemberId(), blogReview.getId());
+        if(likes == null)
+            likes = BlogLikes.builder().blog(blogReview).member(member).build();
+        likes.changeLikesStatus();
+        likesRepository.save(likes);
+        return !likes.getIsDeleted();
     }
 
     public BlogListResponseDto findMyLikedBlogReviews(Member member, Integer pageNo){
-        PageRequest pageRequest;
-        if(pageNo == null)
-            pageRequest = PageRequest.of(0,6, Sort.by("id").descending());
+        if(pageNo != null)
+            return likesRepository.findAllByMemberId(pageNo.longValue()-1, member.getMemberId());
         else
-            pageRequest = PageRequest.of(pageNo-1,6, Sort.by("id").descending());
-        return BlogListResponseDto.likesFrom(likesRepository.findAllByMember(member,pageRequest));
+            return likesRepository.findAllByMemberId(0L, member.getMemberId());
     }
 
     @Transactional
-    public void removeBlogLikesByBlogReview(BlogReview blogReview){
-        likesRepository.deleteAllByBlog(blogReview);
+    public void removeBlogLikesByBlogReview(Long blogId){
+        likesRepository.deleteAllByBlogId(blogId);
     }
 }

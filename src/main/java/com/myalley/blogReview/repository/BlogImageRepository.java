@@ -7,8 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface BlogImageRepository extends JpaRepository<BlogImage, Long> {
+public interface BlogImageRepository extends JpaRepository<BlogImage, Long>, BlogImageRepositoryCustom {
     Optional<BlogImage> findByIdAndBlog(Long imageId, BlogReview blog);
     List<BlogImage> findAllByBlog(BlogReview blog);
     Integer countByBlog(BlogReview blog);
+    List<BlogImage> findAllByBlogIn(List<BlogReview> blogReviewList);
 }

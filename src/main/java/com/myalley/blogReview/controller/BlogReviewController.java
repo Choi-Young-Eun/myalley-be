@@ -50,6 +50,24 @@ public class BlogReviewController {
         return new ResponseEntity<>("블로그 글이 삭제되었습니다.",HttpStatus.OK);
     }
 
+    @DeleteMapping("/api/blogs/me")
+    public ResponseEntity removeBlogReviewsPermanently(@RequestHeader(value="idList") List<Long> blogId){
+        log.info("Request-Type : Delete_Permanently, Entity : BlogReview_List");
+        Member member = (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        blogReviewService.removeBlogReviewsPermanently(blogId, member);
+        return new ResponseEntity<>("여러개의 블로그 글이 영구 삭제되었습니다.", HttpStatus.OK);
+    }
+
+    @GetMapping("/api/blogs/me")
+    public ResponseEntity findMyBlogReviews(@RequestParam(value = "page",required = false) Integer pageNo,
+                                            @RequestParam(value = "deleted",required = false) boolean deleteMode){
+        log.info("Request-Type : Get, Entity : BlogReview_List, Type : MyPage, Deleted : {}", deleteMode);
+        Member member = (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        return new ResponseEntity<>(blogReviewService.findMyBlogReviews(member,pageNo,deleteMode),HttpStatus.OK);
+    }
+
     @GetMapping("/blogs/{blog-id}")
     public ResponseEntity findBlogReviewByBlogId(@PathVariable("blog-id") Long blogId,
                                               @RequestHeader(value = "memberId", required = false) Long memberId){
@@ -65,14 +83,6 @@ public class BlogReviewController {
         log.info("Request-Type : Get, Entity : BlogReview_List, Type : Basic");
 
         return new ResponseEntity<>(blogReviewService.findPagedBlogReviews(pageNo,orderType,word),HttpStatus.OK);
-    }
-
-    @GetMapping("/api/blogs/me")
-    public ResponseEntity findMyBlogReviews(@RequestParam(value = "page",required = false) Integer pageNo){
-        log.info("Request-Type : Get, Entity : BlogReview_List, Type : MyPage");
-        Member member = (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        return new ResponseEntity<>(blogReviewService.findMyBlogReviews(member,pageNo),HttpStatus.OK);
     }
 
     @GetMapping("/blogs/exhibitions/{exhibition-id}")
