@@ -1,17 +1,15 @@
 package com.myalley.simpleReview.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.myalley.exhibition.dto.response.ExhibitionSimpleReviewDto;
 import com.myalley.member.dto.MemberBlogDto;
-import com.myalley.simpleReview.domain.SimpleReview;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-@Data
+@Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class SimpleListDto {
     private Long id;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
@@ -21,16 +19,5 @@ public class SimpleListDto {
     private String time;
     private String congestion;
     private MemberBlogDto memberInfo;
-    private SimpleExhibitionDto exhibitionInfo;
-
-    public static SimpleListDto memberFrom(SimpleReview simpleReview){
-        return new SimpleListDto(simpleReview.getId(), simpleReview.getViewDate(), simpleReview.getRate(),
-                simpleReview.getContent(), simpleReview.getTime(), simpleReview.getCongestion(),
-                MemberBlogDto.from(simpleReview.getMember()), null);
-    }
-    public static SimpleListDto exhibitionFrom(SimpleReview simpleReview){
-        return new SimpleListDto(simpleReview.getId(), simpleReview.getViewDate(), simpleReview.getRate(),
-                simpleReview.getContent(), simpleReview.getTime(), simpleReview.getCongestion(),
-                null, SimpleExhibitionDto.from(simpleReview.getExhibition()));
-    }
+    private ExhibitionSimpleReviewDto exhibitionInfo;
 }
