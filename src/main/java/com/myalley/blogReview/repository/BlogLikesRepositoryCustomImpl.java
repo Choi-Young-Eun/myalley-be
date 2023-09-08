@@ -22,11 +22,12 @@ import static com.myalley.member.domain.QMember.member;
 @RequiredArgsConstructor
 public class BlogLikesRepositoryCustomImpl implements BlogLikesRepositoryCustom{
     private final JPAQueryFactory queryFactory;
-    private final Long LIST_MY_PAGE = 6L;
 
     @Override
     public BlogListResponseDto findAllByMemberId(Long pageNo, Long memberId) {
-        List<BlogListDto> listDto2 = queryFactory.select(Projections.fields(BlogListDto.class,
+        final Long LIST_MY_PAGE = 6L;
+
+        List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
                         blogReview.id,
                         blogReview.title,
                         blogReview.viewDate,
@@ -45,16 +46,20 @@ public class BlogLikesRepositoryCustomImpl implements BlogLikesRepositoryCustom{
                 .offset(pageNo*LIST_MY_PAGE)
                 .fetch();
 
-        Integer totalCount = queryFactory.select(blogLikes.count()).from(blogLikes)
+        if(listDto.isEmpty())
+            return new BlogListResponseDto(listDto, new pagingDto(pageNo.intValue()+1, 0, 0, 0));
+
+        int totalCount = queryFactory.select(blogLikes.count()).from(blogLikes)
                 .where(blogLikes.member.memberId.eq(memberId), blogLikes.isDeleted.isFalse())
                 .fetchOne().intValue();
-        pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto2.size(),
-                    totalCount, totalCount/LIST_MY_PAGE.intValue()+1);
+        int totalPage;
+        if(totalCount % LIST_MY_PAGE.intValue() == 0)
+            totalPage = totalCount/LIST_MY_PAGE.intValue();
+        else
+            totalPage = totalCount/LIST_MY_PAGE.intValue()+1;
+        pagingDto pageInfo = new pagingDto(pageNo.intValue()+1, listDto.size(), totalCount, totalPage);
 
-        BlogListResponseDto responseDto = new BlogListResponseDto();
-        responseDto.setBlogInfo(listDto2);
-        responseDto.setPageInfo(pagingDto);
-        return responseDto;
+        return new BlogListResponseDto(listDto, pageInfo);
     }
 
     @Override

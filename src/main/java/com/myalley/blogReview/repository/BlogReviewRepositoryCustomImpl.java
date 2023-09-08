@@ -34,9 +34,6 @@ import static com.myalley.member.domain.QMember.member;
 @RequiredArgsConstructor
 public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCustom{
     private final JPAQueryFactory queryFactory;
-    private final Long LIST_BASIC = 9L;
-    private final Long LIST_MY_PAGE = 6L;
-
 
     @Transactional
     @Override
@@ -130,6 +127,8 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
 
     @Override
     public BlogListResponseDto findPagedBlogReviews(Long pageNo, String orderType, String word, Long exhibitionId) {
+        final Long LIST_BASIC = 9L;
+
         List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
                         blogReview.id,
                         blogReview.title,
@@ -149,18 +148,24 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                 .offset(pageNo*LIST_BASIC)
                 .fetch();
 
-        Integer totalCount = findCountAllBlogs(exhibitionId, word);
-        pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto.size(),
-                totalCount, totalCount/LIST_BASIC.intValue()+1);
+        if(listDto.isEmpty())
+            return new BlogListResponseDto(listDto, new pagingDto(pageNo.intValue()+1, 0, 0, 0));
 
-        BlogListResponseDto responseDto = new BlogListResponseDto();
-        responseDto.setBlogInfo(listDto);
-        responseDto.setPageInfo(pagingDto);
-        return responseDto;
+        int totalCount = findCountAllBlogs(exhibitionId, word);
+        int totalPage;
+        if(totalCount % LIST_BASIC.intValue() == 0)
+            totalPage = totalCount/LIST_BASIC.intValue();
+        else
+            totalPage = totalCount/LIST_BASIC.intValue()+1;
+        pagingDto pageInfo = new pagingDto(pageNo.intValue()+1, listDto.size(), totalCount, totalPage);
+
+        return new BlogListResponseDto(listDto, pageInfo);
     }
 
     @Override
     public BlogListResponseDto findPagedBlogReviewsByMemberId(Long pageNo, Long memberId, boolean deleteMode) {
+        final Long LIST_MY_PAGE = 6L;
+
         List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
                 blogReview.id,
                 blogReview.title,
@@ -176,15 +181,19 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
                 .offset(pageNo*LIST_MY_PAGE)
                 .fetch();
 
-        Integer totalCount = queryFactory.select(blogReview.count()).from(blogReview)
-                .where(blogReview.member.memberId.eq(memberId), deleteMode(deleteMode)).fetchOne().intValue();
-        pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto.size(),
-                totalCount, totalCount/LIST_MY_PAGE.intValue()+1);
+        if(listDto.isEmpty())
+            return new BlogListResponseDto(listDto, new pagingDto(pageNo.intValue()+1, 0, 0, 0));
 
-        BlogListResponseDto responseDto = new BlogListResponseDto();
-        responseDto.setBlogInfo(listDto);
-        responseDto.setPageInfo(pagingDto);
-        return responseDto;
+        int totalCount = queryFactory.select(blogReview.count()).from(blogReview)
+                .where(blogReview.member.memberId.eq(memberId), deleteMode(deleteMode)).fetchOne().intValue();
+        int totalPage;
+        if(totalCount % LIST_MY_PAGE.intValue() == 0)
+            totalPage = totalCount/LIST_MY_PAGE.intValue();
+        else
+            totalPage = totalCount/LIST_MY_PAGE.intValue()+1;
+        pagingDto pageInfo = new pagingDto(pageNo.intValue()+1, listDto.size(), totalCount, totalPage);
+
+        return new BlogListResponseDto(listDto, pageInfo);
     }
 
     private OrderSpecifier[] orderSpecifierList(String orderType) {
@@ -201,7 +210,7 @@ public class BlogReviewRepositoryCustomImpl implements BlogReviewRepositoryCusto
         return orderSpecifiers.toArray(new OrderSpecifier[orderSpecifiers.size()]);
     }
 
-    private Integer findCountAllBlogs(Long exhibitionId, String word) {
+    private int findCountAllBlogs(Long exhibitionId, String word) {
         return queryFactory
                 .select(blogReview.count()).from(blogReview)
                 .where(exhibitionMode(exhibitionId),

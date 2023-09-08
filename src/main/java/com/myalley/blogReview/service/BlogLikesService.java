@@ -9,7 +9,6 @@ import com.myalley.exception.CustomException;
 import com.myalley.member.domain.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +33,6 @@ public class BlogLikesService {
             return likesRepository.findAllByMemberId(0L, member.getMemberId());
     }
 
-    @Transactional
     public void removeBlogLikesByBlogReview(Long blogId){
         likesRepository.deleteAllByBlogId(blogId);
     }

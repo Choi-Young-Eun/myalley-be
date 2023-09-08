@@ -94,6 +94,7 @@ public class BlogReviewService {
         blogReviewRepository.deleteListPermanently(blogIdList);
     }
 
+    @Transactional
     public void removeBlogReviewByMember(Long blogId, Member member){
         BlogReview pre = verifyRequester(blogId,member.getMemberId());
         if(pre.getIsDeleted() == Boolean.FALSE)
@@ -101,6 +102,7 @@ public class BlogReviewService {
         else throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
     }
 
+    @Transactional
     public void removeBlogReviewByExhibitionId(Long exhibitionId){
         List<BlogReview> lists = blogReviewRepository.findAllByExhibitionId(exhibitionId);
         if(!CollectionUtils.isEmpty(lists)) {
@@ -133,9 +135,11 @@ public class BlogReviewService {
     
     //3. 블로그 목록 조회 요청 시 pageNumber 세팅
     private Long setPageNumber(Integer pageNo){
-        if(pageNo != null)
-            return pageNo.longValue()-1;
-        else
+        if(pageNo == null)
             return 0L;
+        else if(pageNo >= 1)
+            return pageNo.longValue()-1;
+        else //페이지 값으로 허용되는 최솟값은 1
+         throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
     }
 }
