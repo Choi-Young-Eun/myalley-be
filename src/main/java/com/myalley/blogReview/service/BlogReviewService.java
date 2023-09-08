@@ -4,6 +4,7 @@ import com.myalley.blogReview.domain.BlogReview;
 import com.myalley.blogReview.dto.request.BlogRequestDto;
 import com.myalley.blogReview.dto.response.BlogDetailResponseDto;
 import com.myalley.blogReview.dto.response.BlogListResponseDto;
+import com.myalley.exception.SimpleReviewExceptionType;
 import com.myalley.exhibition.service.ExhibitionService;
 import com.myalley.member.domain.Member;
 
@@ -133,9 +134,11 @@ public class BlogReviewService {
     
     //3. 블로그 목록 조회 요청 시 pageNumber 세팅
     private Long setPageNumber(Integer pageNo){
-        if(pageNo != null)
-            return pageNo.longValue()-1;
-        else
+        if(pageNo == null)
             return 0L;
+        else if(pageNo >= 1)
+            return pageNo.longValue()-1;
+        else //페이지 값으로 허용되는 최솟값은 1
+         throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
     }
 }

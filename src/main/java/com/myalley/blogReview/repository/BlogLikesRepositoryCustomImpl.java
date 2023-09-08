@@ -26,7 +26,7 @@ public class BlogLikesRepositoryCustomImpl implements BlogLikesRepositoryCustom{
 
     @Override
     public BlogListResponseDto findAllByMemberId(Long pageNo, Long memberId) {
-        List<BlogListDto> listDto2 = queryFactory.select(Projections.fields(BlogListDto.class,
+        List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
                         blogReview.id,
                         blogReview.title,
                         blogReview.viewDate,
@@ -48,12 +48,14 @@ public class BlogLikesRepositoryCustomImpl implements BlogLikesRepositoryCustom{
         Integer totalCount = queryFactory.select(blogLikes.count()).from(blogLikes)
                 .where(blogLikes.member.memberId.eq(memberId), blogLikes.isDeleted.isFalse())
                 .fetchOne().intValue();
-        pagingDto pagingDto = new pagingDto(pageNo.intValue()+1, listDto2.size(),
-                    totalCount, totalCount/LIST_MY_PAGE.intValue()+1);
+        Integer totalPage;
+        if(totalCount % LIST_MY_PAGE.intValue() == 0)
+            totalPage = totalCount/LIST_MY_PAGE.intValue();
+        else
+            totalPage = totalCount/LIST_MY_PAGE.intValue()+1;
+        pagingDto pageInfo = new pagingDto(pageNo.intValue()+1, listDto.size(), totalCount, totalPage);
 
-        BlogListResponseDto responseDto = new BlogListResponseDto();
-        responseDto.setBlogInfo(listDto2);
-        responseDto.setPageInfo(pagingDto);
+        BlogListResponseDto responseDto = new BlogListResponseDto(listDto, pageInfo);
         return responseDto;
     }
 

@@ -1,15 +1,14 @@
 package com.myalley.blogReview.dto.response;
 
 import com.myalley.common.dto.pagingDto;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.List;
 
-@Data
-@NoArgsConstructor
+@Getter
+@AllArgsConstructor
 public class BlogListResponseDto {
     private List<BlogListDto> blogInfo;
     private pagingDto pageInfo;
-
 }
