@@ -9,7 +9,6 @@ import com.myalley.exception.CustomException;
 import com.myalley.member.domain.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +32,6 @@ public class BlogBookmarkService {
         else
             return bookmarkRepository.findAllByMemberId(0L, member.getMemberId());
     }
-
-    @Transactional
+    
     public void removeBlogBookmarksByBlogReview(Long blogId){ bookmarkRepository.deleteAllByBlogId(blogId); }
 }

@@ -13,11 +13,6 @@ import com.myalley.simpleReview.repository.SimpleReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
@@ -52,12 +47,8 @@ public class SimpleReviewService {
         simpleRepository.delete(target);
     }
 
-    @Transactional
     public void removeSimpleReviewByExhibitionId(Long exhibitionId){
-        List<SimpleReview> lists= simpleRepository.findAllByExhibitionId(exhibitionId);
-        if(!CollectionUtils.isEmpty(lists)){
-            simpleRepository.removeSimpleReviewByIdList(lists.stream().map(SimpleReview::getId).collect(Collectors.toList()));
-        }
+        simpleRepository.deleteAllByExhibitionId(exhibitionId);
     }
 
     public SimpleListResponseDto findPagedSimpleReviewsByExhibitionId(Long exhibitionId, Integer pageNo, String orderType){

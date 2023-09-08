@@ -14,6 +14,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,11 +27,10 @@ import static com.myalley.simpleReview.domain.QSimpleReview.simpleReview;
 public class SimpleReviewRepositoryCustomImpl implements SimpleReviewRepositoryCustom{
     private final JPAQueryFactory queryFactory;
 
-    private Long LIST_BASIC = 10L;
-    private Long LIST_MY_PAGE = 5L;
-
     @Override
     public SimpleListResponseDto findPagedSimpleReviewsByExhibitionId(Long pageNo, String orderType, Long exhibitionId) {
+        final Long LIST_BASIC = 10L;
+
         List<SimpleListDto> listDto = queryFactory.select(Projections.fields(SimpleListDto.class,
                         simpleReview.id, simpleReview.viewDate, simpleReview.rate, simpleReview.content,
                         simpleReview.time, simpleReview.congestion,
@@ -44,21 +44,25 @@ public class SimpleReviewRepositoryCustomImpl implements SimpleReviewRepositoryC
                 .offset(pageNo*LIST_BASIC)
                 .fetch();
 
-        Integer totalCount = queryFactory.select(simpleReview.count()).from(simpleReview)
+        if(listDto.isEmpty())
+            return new SimpleListResponseDto(listDto, new pagingDto(pageNo.intValue()+1, 0, 0, 0));
+
+        int totalCount = queryFactory.select(simpleReview.count()).from(simpleReview)
                 .where(simpleReview.exhibition.id.eq(exhibitionId)).fetchOne().intValue();
-        Integer totalPage;
+        int totalPage;
         if(totalCount % LIST_BASIC.intValue() == 0)
             totalPage = totalCount/LIST_BASIC.intValue();
         else
             totalPage = totalCount/LIST_BASIC.intValue()+1;
         pagingDto pageInfo = new pagingDto(pageNo.intValue()+1, listDto.size(), totalCount, totalPage);
 
-        SimpleListResponseDto dto = new SimpleListResponseDto(listDto, pageInfo);
-        return dto;
+        return new SimpleListResponseDto(listDto, pageInfo);
     }
 
     @Override
     public SimpleListResponseDto findPagedSimpleReviewsByMemberId(Long pageNo, Long memberId) {
+        final Long LIST_MY_PAGE = 5L;
+
         List<SimpleListDto> listDto = queryFactory.select(Projections.fields(SimpleListDto.class,
                         simpleReview.id, simpleReview.viewDate, simpleReview.rate, simpleReview.content,
                         simpleReview.time, simpleReview.congestion,
@@ -72,17 +76,27 @@ public class SimpleReviewRepositoryCustomImpl implements SimpleReviewRepositoryC
                 .offset(pageNo*LIST_MY_PAGE)
                 .fetch();
 
-        Integer totalCount = queryFactory.select(simpleReview.count()).from(simpleReview)
+        if(listDto.isEmpty())
+            return new SimpleListResponseDto(listDto, new pagingDto(pageNo.intValue()+1, 0, 0, 0));
+
+        int totalCount = queryFactory.select(simpleReview.count()).from(simpleReview)
                 .where(simpleReview.member.memberId.eq(memberId)).fetchOne().intValue();
-        Integer totalPage;
+        int totalPage;
         if(totalCount % LIST_MY_PAGE.intValue() == 0)
             totalPage = totalCount/LIST_MY_PAGE.intValue();
         else
             totalPage = totalCount/LIST_MY_PAGE.intValue()+1;
         pagingDto pageInfo = new pagingDto(pageNo.intValue()+1, listDto.size(), totalCount, totalPage);
 
-        SimpleListResponseDto dto = new SimpleListResponseDto(listDto, pageInfo);
-        return dto;
+        return new SimpleListResponseDto(listDto, pageInfo);
+    }
+
+    @Transactional
+    @Override
+    public void deleteAllByExhibitionId(Long exhibitionId) {
+        queryFactory.delete(simpleReview)
+                .where(simpleReview.exhibition.id.eq(exhibitionId))
+                .execute();
     }
 
     private OrderSpecifier[] orderSpecifierList(String orderType){

@@ -4,7 +4,6 @@ import com.myalley.blogReview.domain.BlogReview;
 import com.myalley.blogReview.dto.request.BlogRequestDto;
 import com.myalley.blogReview.dto.response.BlogDetailResponseDto;
 import com.myalley.blogReview.dto.response.BlogListResponseDto;
-import com.myalley.exception.SimpleReviewExceptionType;
 import com.myalley.exhibition.service.ExhibitionService;
 import com.myalley.member.domain.Member;
 
@@ -95,6 +94,7 @@ public class BlogReviewService {
         blogReviewRepository.deleteListPermanently(blogIdList);
     }
 
+    @Transactional
     public void removeBlogReviewByMember(Long blogId, Member member){
         BlogReview pre = verifyRequester(blogId,member.getMemberId());
         if(pre.getIsDeleted() == Boolean.FALSE)
@@ -102,6 +102,7 @@ public class BlogReviewService {
         else throw new CustomException(BlogReviewExceptionType.BLOG_BAD_REQUEST);
     }
 
+    @Transactional
     public void removeBlogReviewByExhibitionId(Long exhibitionId){
         List<BlogReview> lists = blogReviewRepository.findAllByExhibitionId(exhibitionId);
         if(!CollectionUtils.isEmpty(lists)) {

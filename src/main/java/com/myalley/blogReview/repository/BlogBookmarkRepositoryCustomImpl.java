@@ -22,10 +22,11 @@ import static com.myalley.member.domain.QMember.member;
 @RequiredArgsConstructor
 public class BlogBookmarkRepositoryCustomImpl implements BlogBookmarkRepositoryCustom{
     private final JPAQueryFactory queryFactory;
-    private final Long LIST_MY_PAGE = 6L;
 
     @Override
     public BlogListResponseDto findAllByMemberId(Long pageNo, Long memberId) {
+        final Long LIST_MY_PAGE = 6L;
+
         List<BlogListDto> listDto = queryFactory.select(Projections.fields(BlogListDto.class,
                         blogReview.id,
                         blogReview.title,
@@ -45,18 +46,20 @@ public class BlogBookmarkRepositoryCustomImpl implements BlogBookmarkRepositoryC
                 .offset(pageNo*LIST_MY_PAGE)
                 .fetch();
 
-        Integer totalCount = queryFactory.select(blogBookmark.count()).from(blogBookmark)
+        if(listDto.isEmpty())
+            return new BlogListResponseDto(listDto, new pagingDto(pageNo.intValue()+1, 0, 0, 0));
+
+        int totalCount = queryFactory.select(blogBookmark.count()).from(blogBookmark)
                 .where(blogBookmark.member.memberId.eq(memberId))
                 .fetchOne().intValue();
-        Integer totalPage;
+        int totalPage;
         if(totalCount % LIST_MY_PAGE.intValue() == 0)
             totalPage = totalCount/LIST_MY_PAGE.intValue();
         else
             totalPage = totalCount/LIST_MY_PAGE.intValue()+1;
         pagingDto pageInfo = new pagingDto(pageNo.intValue()+1, listDto.size(), totalCount, totalPage);
 
-        BlogListResponseDto responseDto = new BlogListResponseDto(listDto, pageInfo);
-        return responseDto;
+        return new BlogListResponseDto(listDto, pageInfo);
     }
 
     @Override
