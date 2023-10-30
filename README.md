@@ -65,7 +65,7 @@
 
 ### [User Flow](https://github.com/myalley-project/myalley-be/wiki/USER-FLOW)
 
-### [ERD](https://github.com/myalley-project/myalley-be/wiki/ERD)
+### [DB Schema](https://github.com/myalley-project/myalley-be/wiki/DB-Schema)
 
 ### [API 문서](https://www.notion.so/API-77fb0b5a78d64873a8feece00fbe0d70?pvs=4)
 
